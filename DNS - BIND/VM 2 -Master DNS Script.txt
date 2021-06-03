@@ -1,0 +1,97 @@
+#!/bin/bash
+
+echo Installing DNS
+yum -y install bind bind-utils
+systemctl enable named
+systemctl stop named
+
+firewall-cmd --permanent --zone=public --add-interface=ens192
+firewall-cmd --permanent --zone=work --add-interface=ens224
+firewall-cmd --permanent --zone=public --add-service=dns
+firewall-cmd --permanent --zone=work--add-service=dns
+firewall-cmd --reload
+
+rm -rf /var/named/zones
+mkdir -p /var/named/zones
+
+#Zone config
+
+echo "\$ORIGIN .
+\$TTL 259200     ; 3 days
+cbatinga.ops        IN SOA  pri-dns.cbatinga.ops. hostmaster.yoursenecaid.ops. (
+                                2018042902 ; serial
+                                28800      ; refresh (8 hours)
+                                7200       ; retry (2 hours)
+                                604800     ; expire (1 week)
+                                86400      ; minimum (1 day)
+                                )
+                        NS      pri-dns.cbatinga.ops.
+\$ORIGIN cbatinga.ops.
+\$TTL 259200     ; 3 days
+router                    A       192.168.1.1
+pri-dns                     A       192.168.1.2
+co-nfs                     A       192.168.1.3
+ms-ldap                     A       192.168.1.4"  >  /var/named/zones/my-zone
+
+
+#Rervese zone
+
+echo "\$ORIGIN .
+\$TTL 259200     ; 3 days
+1.168.192.in-addr.arpa  IN SOA  pri-dns.cbatinga.ops. hostmaster.yoursenecaid.ops. (
+                                2018042903 ; serial
+                                28800      ; refresh (8 hours)
+                                7200       ; retry (2 hours)
+                                604800     ; expire (1 week)
+                                86400      ; minimum (1 day)
+                                )
+                        NS      pri-dns.cbatinga.ops.
+\$ORIGIN 1.168.192.in-addr.arpa.
+1                       PTR     router.cbatinga.ops.
+2                       PTR     pri-dns.cbatinga.ops.
+3                       PTR     co-nfs.cbatinga.ops.
+4                       PTR     rns.cbatinga.ops." > /var/named/zones/rev-zone
+
+chgrp named -R /var/named
+chown named -R /var/named/zones
+restorecon -R /var/named
+
+echo "options {
+directory \"/var/named/zones\";
+allow-query {any;};
+listen-on-v6 port 53 { ::1; };
+filter-aaaa-on-v4 yes;
+listen-on port 53 { any; };
+dnssec-enable yes;
+dnssec-validation no;
+dnssec-lookaside auto;
+forwarders {208.67.222.222;}; 
+};
+zone \"cbatinga.ops\" {
+type master;
+file \"my-zone\";
+allow-update { localhost; };
+};
+zone \"1.168.192.in-addr.arpa.\" {
+type master;
+file \"rev-zone\";
+allow-update { localhost; };
+};" > /etc/named.conf
+
+chown root:named /etc/named.conf
+restorecon /etc/named.conf
+
+systemctl start named
+
+echo "search cbatinga.ops
+nameserver 192.168.1.2" > /etc/resolv.conf
+
+dig router
+
+if [ $? = 0 ]
+then
+  echo "DNS configured succesfully"
+else
+  echo "DNS failed"
+fi
+

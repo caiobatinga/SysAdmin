@@ -1,0 +1,43 @@
+Total pakcets received from SMTP in the 192.168.0.0/16 10:09:
+
+ PKTS BYTS
+ 26 1512            tcp  --  ens224 ens192  anywhere             192.168.0.0/16       tcp dpt:smtp
+
+
+10:56:
+
+289 29282            tcp  --  ens224 ens192  anywhere             192.168.0.0/16       tcp dpt:smtp
+
+
+Total packets sent to a given SMTP in the 192.168.0.0/16 10:09:
+PKTS  BYTES
+  3  783            tcp  --  ens192 ens224  anywhere             192.168.0.0/16       tcp dpt:smtp
+
+11:00:
+
+51  6582            tcp  --  ens192 ens224  anywhere             192.168.0.0/16       tcp dpt:smtp
+
+
+Total packets received from all SMTP 10:09:
+PKT Bytes
+29 783            tcp  --  ens224 ens192  anywhere             anywhere             tcp dpt:smtp
+
+11:08:
+
+ 257 25380            tcp  --  ens224 ens192  anywhere             anywhere             tcp dpt:smtp
+
+Total Number of packets sent to all SMTP 10:09:
+
+30  3785           tcp  --  ens192 ens224  anywhere             anywhere             tcp dpt:smtp
+
+11:09:
+
+51  6582            tcp  --  ens192 ens224  anywhere             anywhere             tcp dpt:smtp
+
+DNS Packets received 10:09
+
+1   107            udp  --  ens192 ens224  anywhere             192.168.1.2          udp dpt:domain
+
+11:12:
+
+3   310            udp  --  ens192 ens224  anywhere             192.168.1.2          udp dpt:domain

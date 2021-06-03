@@ -1,0 +1,110 @@
+!
+version 12.4
+no service timestamps log datetime msec
+no service timestamps debug datetime msec
+no service password-encryption
+!
+hostname RtrPod1
+!
+!
+!
+enable secret 5 $1$mERr$9cTjUIEqNGurQiFU.ZeCi1
+!
+!
+ip dhcp excluded-address 10.15.0.1 10.15.0.10
+!
+ip dhcp pool Voice
+ network 10.15.0.0 255.255.255.0
+ default-router 10.15.0.1
+ option 150 ip 10.15.0.1
+ip dhcp pool Data
+ network 10.10.0.0 255.255.255.0
+ default-router 10.10.0.1
+ option 150 ip 10.10.0.1
+clock timezone utc -5
+!
+!
+!
+!
+ip cef
+no ipv6 cef
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+no ip domain-lookup
+!
+!
+spanning-tree mode pvst
+!
+!
+!
+!
+!
+!
+interface FastEthernet0/0
+ no ip address
+ duplex auto
+ speed auto
+!
+interface FastEthernet0/0.10
+ description Data VLAN
+ encapsulation dot1Q 10
+ ip address 10.10.0.1 255.255.255.0
+!
+interface FastEthernet0/0.11
+ description Management VLAN
+ encapsulation dot1Q 11
+ ip address 10.11.0.1 255.255.255.0
+!
+interface FastEthernet0/0.15
+ description Voice VLAN
+ encapsulation dot1Q 15
+ ip address 10.15.0.1 255.255.255.0
+!
+interface FastEthernet0/1
+ ip address 192.168.0.2 255.255.255.0
+ duplex auto
+ speed auto
+!
+interface Vlan1
+ no ip address
+ shutdown
+!
+ip classless
+!
+ip flow-export version 9
+!
+!
+!
+!
+!
+!
+!
+!
+line con 0
+ exec-timeout 120 0
+ password cisco
+ logging synchronous
+ login
+!
+line aux 0
+!
+line vty 0 4
+ password cisco
+ login
+line vty 5 15
+ password cisco
+ login
+!
+!
+ntp server 192.168.0.1
+!
+end
+

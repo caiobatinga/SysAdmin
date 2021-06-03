@@ -1,0 +1,85 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.topnav {
+  overflow: hidden;
+  background-color: #333;
+}
+
+.topnav a {
+  float: left;
+  color: #f2f2f2;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  font-size: 17px;
+}
+
+.topnav a:hover {
+  background-color: #ddd;
+  color: black;
+}
+
+.topnav a.active {
+  background-color: #4CAF50;
+  color: white;
+}
+</style>
+	<style>
+body {
+  background: #FFFFFF;
+}
+
+.content {
+  max-width: 500px;
+  margin: auto;
+  background: white;
+  padding: 10px;
+}
+</style>
+	
+<title>home</title>
+</head>
+
+<body>
+	<h1> Employee Directory</h1>
+	<div class="topnav">
+  <a href="page1.html">Home</a>
+	<a class="active" href="new.html">New Record</a>
+  <a href="display.py">View Employees</a>
+  <a href="delete.html">Delete Record</a>
+  <a href="change.html">Change Record </a>
+<a href="transfer.py">Transfers</a>
+<a href="vacation.py">Vacation Request</a>
+<a href="new_hire.py">New Hires</a>
+</div>
+	<br>
+	<div class="content">
+<form action="pythonweb.py" method="post">
+	<b>Employee ID:</b>
+	<input type="text" placeholder="Enter User ID" name="id"><br><br>
+	<b>Name:</b>
+	<input type="text" placeholder="Enter Name" name="fullname"><br><br>
+	<b>Job Title:</b>
+	<input type="text" placeholder="Enter Job Title" name="jobtitle"><br><br>
+	<b>Emergency Contact:</b>
+	<input type="text" placeholder="Enter Contact" name="emergency"><br><br>
+	<b>Home Address:</b>
+	<input type="text" placeholder="Enter Address" name="address"><br><br>
+	<input type="submit" value="SUBMIT"><br>
+	
+	
+	</form>
+<br>
+	</div>
+	
+</body>
+</html>

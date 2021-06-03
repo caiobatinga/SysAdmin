@@ -1,0 +1,116 @@
+#!/bin/bash
+
+yum -y install yum-utils
+yum-config-manager --add-repo=https://repo.symas.com/configs/SOFL/rhel8/sofl.repo
+yum -y install openldap
+yum -y install symas-openldap-clients
+yum -y install symas-openldap-servers
+yum -y install perl
+
+wget https://filebin.net/archive/5qw5r44c83lpfua2/tar?t=qx2sdubd
+tar -xf 'tar?t=qx2sdubd.1'
+cp -r migrationtools /usr/share/
+
+chown ldap:ldap /var/lib/ldap
+chown ldap:ldap /etc/openldap/slapd.d/cn=config/cn=schema
+
+echo "Starting slapd"
+
+systemctl start slapd
+
+#Adding schema 
+ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/openldap/schema/cosine.ldif
+ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/openldap/schema/nis.ldif
+ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/openldap/schema/inetorgperson.ldif
+
+
+echo "dn: olcDatabase={2}mdb,cn=config
+changetype: modify
+replace: olcSuffix
+olcSuffix: dc=cbatinga,dc=com
+
+dn: olcDatabase={2}mdb,cn=config
+changetype: modify
+replace: olcRootDN
+olcRootDN: cn=Manager,dc=cbatinga,dc=com
+
+dn: olcDatabase={2}mdb,cn=config
+changetype: modify
+add: olcRootPW
+olcRootPW: {SSHA}3zTCFA0fPswDKqBFK5effsrkTnPL+5tS" > mdb-conf.ldif
+
+ldapmodify -Y EXTERNAL -H ldapi:/// -f mdb-conf.ldif
+
+
+echo "dn: dc=cbatinga,dc=com
+dc: cbatinga
+description: root LDAP entry for ops535
+objectClass: dcObject
+objectClass: organizationalUnit
+ou: rootobject" > base.ldif
+
+echo " dn: ou=People, dc=cbatinga, dc=com
+ou: People
+description: All people in ops535
+objectClass: organizationalUnit" > people.ldif
+
+ldapadd -x -D "cn=Manager,dc=cbatinga,dc=com" -W -f base.ldif
+ldapadd -x -D "cn=Manager,dc=cbatinga,dc=com" -W -f people.ldif
+
+vi /usr/share/migrationtools/migrate_common.ph 
+
+#CCopy user caio
+
+grep -w caio /etc/passwd > /root/ldapusers.entry
+
+migrationtools/migrate_passwd.pl /root/ldapusers.entry /root/ldapusers.ldif
+
+ldapadd -x -D "cn=Manager,dc=cbatinga,dc=com" -W -f /root/ldapusers.ldif
+
+#Firewall rules
+
+firewall-cmd --permanent --zone=work --add-service=ldap
+firewall-cmd --permanent --zone=work --add-service=ldaps
+firewall-cmd --reload
+
+openssl genrsa -des3 -out ca.key 4096
+openssl req -new -x509 -days 365 -key ca.key -out ca.cert.pem
+openssl genrsa -out rns-ldap.cbatinga.ops.key 4096
+openssl req -new -key rns-ldap.cbatinga.ops.key -out rns-ldap.cbatinga.ops.csr
+openssl x509 -req -in rns-ldap.cbatinga.ops.csr -CA ca.cert.pem -CAkey ca.key -out rns-ldap.cbatinga.ops.crt -CAcreateserial -days 365 -sha256
+
+cp rns-ldap.cbatinga.ops.crt rns-ldap.cbatinga.ops.key ca.cert.pem /etc/openldap/certs/
+
+chown ldap:ldap /etc/openldap/certs/
+chown ldap:ldap /etc/openldap/certs/*
+chmod 700 /etc/openldap/certs/
+chmod 600 /etc/openldap/certs/*
+
+echo "Adding keys:"
+sleep 3
+
+echo "dn: cn=config
+changetype: modify
+add: olcTLSCertificateFile
+olcTLSCertificateFile: /etc/openldap/certs/rns-ldap.cbatinga.ops.crt
+-
+add: olcTLSCAcertificateFile
+olcTLSCAcertificateFile: /etc/openldap/certs/ca.cert.pem
+-
+add: olcTLSCertificateKeyFile
+olcTLSCertificateKeyFile: /etc/openldap/certs/rns-ldap.cbatinga.ops.key" > newkey.ldif
+
+ldapmodify -Y EXTERNAL -H ldapi:/// -f newkey.ldif
+sleep 4
+
+echo "BASE    dc=cbatinga,dc=com
+URI     ldaps://192.168.1.4 ldapi://
+
+TLS_CACERT      /etc/openldap/certs/ca.cert.pem
+TLSCACERTDIR    /etc/openldap/certs
+
+SASL_NOCANON    on" > /etc/openldap/ldap.conf
+
+
+
+

@@ -1,0 +1,30 @@
+#!/bin/bash
+# Install NFS Server
+
+yum -y install nfs-utils
+
+if [ $? = 0 ]
+then
+  echo "NFS Started"
+else
+  echo "NFS failed"
+fi
+
+
+systemctl start nfs-server
+mkdir /nfs-pub
+chmod 777 /nfs-pub
+chmod +t /nfs-pub
+
+echo " /nfs-pub 192.168.1.1(rw,root_squash)
+/nfs-pub 192.168.1.2(rw,root_squash)
+/nfs-pub 192.168.1.4(rw,root_squash)" > /etc/exports
+
+exportfs -a
+
+showmount -e
+
+cp /etc/passwd /nfs-pub/passwd.S
+
+firewall-cmd --permanent --zone=work--add-service=nfs
+firewall-cmd --reload
